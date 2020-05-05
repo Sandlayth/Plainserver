@@ -2,7 +2,7 @@ import {accessSync, constants} from 'fs';
 import {defaultPath} from '../config';
 
 export function buildPath(path: string): string {
-  return defaultPath + path.replace(/../g, '');
+  return defaultPath + path.replace(/\.\./g, '');
 }
 
 export function isItemAccessible(path: string): boolean {

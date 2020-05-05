@@ -31,7 +31,7 @@ export class BrowserController {
     @inject(RestBindings.Http.RESPONSE) response: Response): Object {
     path = buildPath(path);
     if (isItemAccessible(path)) {
-      response.download(path, path);
+      response.download(path);
       return response;
     } else {
       return "Error"
