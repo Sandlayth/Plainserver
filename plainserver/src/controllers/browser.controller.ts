@@ -1,4 +1,5 @@
-import {get, param} from '@loopback/rest';
+import {inject} from '@loopback/core';
+import {get, oas, param, Response, RestBindings} from '@loopback/rest';
 import {readdirSync} from 'fs';
 import {lookup} from 'mime-types';
 import {defaultPath} from '../config';
@@ -22,5 +23,19 @@ export class BrowserController {
       })
     }
     return items;
+  }
+
+  @get('/download')
+  @oas.response.file()
+  download(
+    @param.query.string('path') path: string,
+    @inject(RestBindings.Http.RESPONSE) response: Response): Object {
+    path = defaultPath + path;
+    if (isItemAccessible(path)) {
+      response.download(path, path);
+      return response;
+    } else {
+      return "Error"
+    }
   }
 }
