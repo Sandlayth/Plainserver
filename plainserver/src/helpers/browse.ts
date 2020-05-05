@@ -6,12 +6,11 @@ export function buildPath(path: string): string {
 }
 
 export function isItemAccessible(path: string): boolean {
-  // eslint-disable-next-line no-shadow
-  let isItemAccessible = true;
+  let accessible = true;
   try {
     accessSync(path, constants.F_OK);
   } catch (err) {
-    isItemAccessible = false;
+    accessible = false;
   }
-  return isItemAccessible;
+  return accessible;
 }
