@@ -2,13 +2,12 @@ import {inject} from '@loopback/core';
 import {get, oas, param, Response, RestBindings} from '@loopback/rest';
 import {readdirSync} from 'fs';
 import {lookup} from 'mime-types';
-import {defaultPath} from '../config';
-import {isItemAccessible} from '../helpers/browse';
+import {buildPath, isItemAccessible} from '../helpers/browse';
 
 export class BrowserController {
   @get('/browse')
   browse(@param.query.string('path') path: string): Array<Object> {
-    path = defaultPath + path;
+    path = buildPath(path);
     let items: Object[] = [];
     if (isItemAccessible(path)) {
       const dirItems = readdirSync(path, {withFileTypes: true});
@@ -30,7 +29,7 @@ export class BrowserController {
   download(
     @param.query.string('path') path: string,
     @inject(RestBindings.Http.RESPONSE) response: Response): Object {
-    path = defaultPath + path;
+    path = buildPath(path);
     if (isItemAccessible(path)) {
       response.download(path, path);
       return response;
