@@ -5,8 +5,27 @@ import {lookup} from 'mime-types';
 import {buildPath, isItemAccessible} from '../helpers/browse';
 
 export class BrowserController {
-  @get('/browse')
-  browse(@param.query.string('path') path: string): Array<Object> {
+  constructor(
+    @inject(RestBindings.Http.RESPONSE) protected response: Response,
+  ) {}
+
+  @get('/browse', {
+    responses: {
+      '200': {
+        description: "Browse GET success",
+        content: {'application/json': {schema: 'array'}}
+      },
+      '500': {
+        description: 'Browse GET fail',
+        content: {'application/json': {schema: 'string'}}
+      }
+    },
+  })
+  async browse(@param.query.string('path') path: string): Promise<Object> {
+    if(!path) {
+      this.response.status(500);
+      return "Missing path parameter";
+    }
     path = buildPath(path);
     let items: Object[] = [];
     if (isItemAccessible(path)) {
