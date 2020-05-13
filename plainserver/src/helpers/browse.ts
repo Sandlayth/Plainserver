@@ -1,4 +1,4 @@
-import {accessSync, constants} from 'fs';
+import {accessSync, constants, lstatSync} from 'fs';
 import {defaultPath} from '../config';
 
 export function buildPath(path: string): string {
@@ -13,4 +13,8 @@ export function isItemAccessible(path: string): boolean {
     accessible = false;
   }
   return accessible;
+}
+
+export function isItemFile(path: string): boolean {
+  return lstatSync(path).isFile();
 }

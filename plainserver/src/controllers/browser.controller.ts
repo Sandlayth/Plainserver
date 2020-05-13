@@ -2,7 +2,7 @@ import {inject} from '@loopback/core';
 import {get, oas, param, Response, RestBindings} from '@loopback/rest';
 import {readdirSync} from 'fs';
 import {lookup} from 'mime-types';
-import {buildPath, isItemAccessible} from '../helpers/browse';
+import {buildPath, isItemAccessible, isItemFile} from '../helpers/browse';
 
 export class BrowserController {
   constructor(
@@ -43,17 +43,37 @@ export class BrowserController {
     return items;
   }
 
-  @get('/download')
+  @get('/download', {
+    responses: {
+      '200': {
+        description: "Download GET success",
+        content: {'application/json': {schema: 'buffer'}}
+      },
+      '500': {
+        description: 'Download GET fail',
+        content: {'application/json': {schema: 'string'}}
+      },
+      '404': {
+        description: 'Download GET fail',
+        content: {'application/json': {schema: 'string'}}
+      }
+    },
+  })
   @oas.response.file()
-  download(
+  async download(
     @param.query.string('path') path: string,
-    @inject(RestBindings.Http.RESPONSE) response: Response): Object {
+    @inject(RestBindings.Http.RESPONSE) response: Response): Promise<Object> {
+    if(!path) {
+      this.response.status(500);
+      return "Missing path parameter";
+    }
     path = buildPath(path);
-    if (isItemAccessible(path)) {
+    if (isItemAccessible(path) && isItemFile(path)) {
       response.download(path);
       return response;
     } else {
-      return "Error"
+      this.response.status(404);
+      return "Parameter error: not a valid file";
     }
   }
 }
