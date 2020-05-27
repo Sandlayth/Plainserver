@@ -5,6 +5,8 @@ import {
   FilterExcludingWhere,
   repository,
   Where,
+  model,
+  property,
 } from '@loopback/repository';
 import {
   post,
@@ -15,14 +17,25 @@ import {
   put,
   del,
   requestBody,
+  HttpErrors,
 } from '@loopback/rest';
+import _ from 'lodash';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
 
+@model()
+export class NewUserRequest extends User {
+  @property({
+    type: 'string',
+    required: true
+  })
+  password: 'string'
+}
+
+
 export class UserController {
   constructor(
-    @repository(UserRepository)
-    public userRepository : UserRepository,
+    @repository(UserRepository) public userRepository : UserRepository,
   ) {}
 
   @post('/users', {
@@ -37,16 +50,28 @@ export class UserController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(User, {
+          schema: getModelSchemaRef(NewUserRequest, {
             title: 'NewUser',
-            
+            exclude: ['id'],
           }),
         },
       },
     })
-    user: User,
+    user: Omit<NewUserRequest, 'id'>,
   ): Promise<User> {
-    return this.userRepository.create(user);
+    try {
+      let savedUser = await this.userRepository.create(_.omit(user, 'password'));
+      const password = user.password;
+      await this.userRepository.userCredentials(savedUser.id).create({password});
+      return savedUser;
+    } catch (error) {
+      // MongoError 11000 duplicate key
+      if (error.code === 11000 && error.errmsg.includes('index: unique')) {
+        throw new HttpErrors.Conflict('Email or username is already taken');
+      } else {
+        throw error;
+      }
+    }
   }
 
   @get('/users/count', {
@@ -81,7 +106,9 @@ export class UserController {
   async find(
     @param.filter(User) filter?: Filter<User>,
   ): Promise<User[]> {
-    return this.userRepository.find(filter);
+    let users = await this.userRepository.find(filter);
+    // users.map(async user => {console.log(await this.userRepository.findCredentials(user.getId()))})
+    return users;
   }
 
   @patch('/users', {

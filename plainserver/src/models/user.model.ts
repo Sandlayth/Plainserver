@@ -1,21 +1,51 @@
-import {Entity, model, property} from '@loopback/repository';
+import {Entity, model, property, hasOne} from '@loopback/repository';
+import { UserCredentials } from './user-credentials.model';
 
-@model()
+@model({
+  settings: {
+    indexes: {
+      uniqueEmail: {
+        keys: {
+          email: 1,
+        },
+        options: {
+          unique: true,
+        },
+      },     
+      uniqueUsername: {
+        keys: {
+          username: 1,
+        },
+        options: {
+          unique: true,
+        },
+      },
+    },
+  },
+})
 export class User extends Entity {
   @property({
     type: 'string',
     id: true,
-    generated: false,
-    required: true,
+    generated: true,
+    mongodb: {dataType: 'ObjectID'},
   })
-  username: string;
+  id: string
 
   @property({
     type: 'string',
     required: true,
   })
-  password: string;
+  email: string
 
+  @property({
+    type: 'string',
+    required: true,
+  })
+  username: string;
+
+  @hasOne(() => UserCredentials)
+  userCredentials: UserCredentials;
 
   constructor(data?: Partial<User>) {
     super(data);
